@@ -150,6 +150,7 @@ def trade(symbol, initial_balance=100000):
                (current_time.hour == 11 and current_time.minute > 30) or \
                current_time.hour > 15:
                 time.sleep(60)
+                print("非交易时间")
                 continue
 
             # 获取实时数据
