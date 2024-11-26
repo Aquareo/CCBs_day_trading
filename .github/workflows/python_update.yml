@@ -28,4 +28,4 @@ jobs:
           pip install akshare
           
       - name: Run day_trading.py script
-        run: python day_trading.py  # 只运行 day_trading.py
+        run: python main.py  # 只运行 day_trading.py
