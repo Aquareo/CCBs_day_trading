@@ -145,9 +145,10 @@ def trade(symbol, initial_balance=100000):
             formatted_time = current_time.strftime('%Y-%m-%d %H:%M:%S')
             print(f"当前时间: {formatted_time}\n")
 
-            # 检查交易时间
-            if current_time.hour < 9 or (current_time.hour == 9 and current_time.minute < 30) or current_time.hour > 15:
-                print("非交易时间，等待...")
+            #检查交易时间（9:30到11:30 &&13:00到15:00）
+            if (current_time.hour < 9 or (current_time.hour == 9 and current_time.minute < 30)) or \
+               (current_time.hour == 11 and current_time.minute > 30) or \
+               current_time.hour > 15:
                 time.sleep(60)
                 continue
 
