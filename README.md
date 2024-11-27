@@ -20,9 +20,3 @@ This project implements day trading strategies and backtesting models for financ
   - **Volume-Based Strategy**  
     A volume strategy that takes advantage of unusual volume spikes to enter or exit positions. This strategy is a unique and critical part of the backtesting framework.
 
-## Setup
-
-To get started, you'll need to install the required dependencies. Make sure you have the following Python packages installed:
-
-```bash
-pip install akshare pandas pytz
