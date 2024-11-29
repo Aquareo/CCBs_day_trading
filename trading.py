@@ -88,7 +88,7 @@ with open(log_file, 'a', encoding='utf-8') as f:  # Use 'a' to append to the fil
             print("时间为:", current_time, "总资产为：", asset)
 
             # Pause for 30 seconds before the next transaction
-            time.sleep(30)  # Pause for 30 seconds
+            time.sleep(50)  # Pause for 50 seconds
 
         else:
             # If it's outside of trading hours, wait and check again after a short interval
