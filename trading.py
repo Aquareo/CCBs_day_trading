@@ -87,7 +87,7 @@ print(symbols)
 def online_day_trading():
     
     # Initial Setup
-    initial = 100000  # Initial capital
+    initial = 10000  # Initial capital
     share = 0  # Shares held
     asset = initial  # Portfolio value
     backtest = []  # Store backtest results
