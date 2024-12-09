@@ -22,7 +22,7 @@ def get_temp(symbols):
                 df = df.iloc[-1]
                 # 添加symbol作为一列来区分不同债券
                 df['symbol'] = symbol
-                print(df)
+                print(df, flush=True)
                 # 将每个df添加到all_dfs列表
                 all_dfs.append(df)
             else:
@@ -49,4 +49,4 @@ def get_temp(symbols):
         return pd.DataFrame()
 
 temp=get_temp(symbols)
-print(temp)
+print(temp, flush=True)
