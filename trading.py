@@ -85,7 +85,7 @@ print(symbols)
 
 
 #根据symbols的票选出实时的target，返回一个向量，包含symbol，交易量，成交价之类的数据
-def get_target(symbols):
+def get_all_symbols(symbols):
     # 用于存储所有symbol的最后一行数据
     all_dfs = []
 
@@ -116,8 +116,8 @@ def get_target(symbols):
         # 尝试转换为 float，遇到错误时将其设置为 NaN
         temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
         temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
-        target = temp.loc[temp['成交额'].idxmax()]  # Choose bond with highest volume
-        return target
+        #target = temp.loc[temp['成交额'].idxmax()]  # Choose bond with highest volume
+        return temp
         # 打印结果
         #print(temp)
         #print(target)
@@ -161,8 +161,8 @@ def online_day_trading():
                 #temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
                 #temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
                 #target = temp.loc[temp['成交额'].idxmax()]  # Choose bond with highest volume
-
-                target=get_target(symbols)
+                temp=get_all_symbols(symbols)
+                target = temp.loc[temp['成交额'].idxmax()]
 
                 if i == 0:
                     # First buy
@@ -195,8 +195,8 @@ def online_day_trading():
                 print("可转债价格为:",old_price )
                 print("时间为:", current_time, "总资产为：", asset)
 
-                # Pause for 60 seconds before the next transaction
-                time.sleep(60)  # Pause for 30 seconds
+                # Pause for 20 seconds before the next transaction
+                time.sleep(20)  # Pause for 30 seconds
 
             else:
                 # If it's outside of trading hours, wait and check again after a short interval
