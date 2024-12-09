@@ -75,9 +75,6 @@ def get_target_symbols(day_n=3,threshod=100000):
 
 #symbols=get_target_symbols()
 
-
-
-
 symbols=['sh111001', 'sh113030', 'sh113537', 'sh113582', 'sh113685', 'sh118003', 'sh118026', 'sz123035', 'sz123078', 'sz123103', 'sz123184', 'sz123190', 'sz123209', 'sz123227', 'sz123228', 'sz123248', 'sz127035', 'sz127072', 'sz127087', 'sz128044', 'sz128076', 'sz128083', 'sz128109',  'sz128118']
 
 # 打印符合条件的债券符号
@@ -144,67 +141,59 @@ def online_day_trading():
     log_file = f"{today} 成交量策略 交易过程.txt"
 
     i = 0
-    # Open file to write backtest process
-    with open(log_file, 'a', encoding='utf-8') as f:  # Use 'a' to append to the file
-        while True:
-            # Get the current time
-            current_time = get_time()
 
-            # Check if current time is within the allowed trading hours
-            # Morning: 09:30 - 11:30, Afternoon: 13:00 - 15:00
-            if (current_time >= datetime.strptime('09:30', '%H:%M').time() and current_time <= datetime.strptime('11:30', '%H:%M').time()) or \
-            (current_time >= datetime.strptime('13:00', '%H:%M').time() and current_time <= datetime.strptime('15:00', '%H:%M').time()):
+    while True:
+        # Get the current time
+        current_time = get_time()
 
-                #选出target
-                #temp = ak.bond_zh_hs_cov_spot()  # Get data for time t
-                #temp = temp[temp['symbol'].isin(symbols)]
-                #temp.rename(columns={'trade': '最新价', 'amount': '成交额'}, inplace=True)
-                # 尝试转换为 float，遇到错误时将其设置为 NaN
-                #temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
-                #temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
-                #target = temp.loc[temp['成交额'].idxmax()]  # Choose bond with highest volume
-                temp=get_temp(symbols)
-                target = temp.loc[temp['成交额'].idxmax()]
+        # Check if current time is within the allowed trading hours
+        # Morning: 09:30 - 11:30, Afternoon: 13:00 - 15:00
+        if (current_time >= datetime.strptime('09:30', '%H:%M').time() and current_time <= datetime.strptime('11:30', '%H:%M').time()) or \
+        (current_time >= datetime.strptime('13:00', '%H:%M').time() and current_time <= datetime.strptime('15:00', '%H:%M').time()):
 
-                if i == 0:
-                    # First buy
-                    old_price = target['最新价']
-                    old_symbol = target['symbol']
-                    share = asset // old_price  # Calculate how many shares can be bought
-                    output = f"时间为：{current_time}\n买入 {old_symbol} {share} 股 总资产: {asset}\n\n"
-                    print(output)
-                    
-                    f.write(output)  # Write to log
+            #选出target
+            temp=get_temp(symbols)
+            target = temp.loc[temp['成交额'].idxmax()]
 
-                else:
-                    # Update asset based on price change and possibly switch bond
-                    current_price = target['最新价']
-                    current_symbol = target['symbol']
-                    new_price = temp.loc[temp['symbol'] == old_symbol]['最新价'].values[0]
-                    asset += share * (new_price - old_price)  # Update asset value
+            if i == 0:
+                # First buy
+                old_price = target['最新价']
+                old_symbol = target['symbol']
+                share = asset // old_price  # Calculate how many shares can be bought
+                
+                output = f"时间为：{current_time}\n买入 {old_symbol} {share} 股 总资产: {asset}\n\n"
+                print(output)
 
-                    if current_symbol != old_symbol:
-                        # Sell old and buy new bond
-                        share = asset // current_price  # Recalculate shares for new bond
-                        output = f"时间为：{current_time}\n清仓 {old_symbol} 买入 {current_symbol} {int(share)} 股 总资产: {asset:.2f}\n\n"
-                        print(output)
-                        f.write(output)  # Write to log
-
-                    old_price = current_price
-                    old_symbol = current_symbol
-
-                i += 1
-                backtest.append(asset)  # Append updated asset
-                print("可转债价格为:",old_price )
-                print("时间为:", current_time, "总资产为：", asset)
-
-                # Pause for 60 seconds before the next transaction
-                time.sleep(60)  # Pause for 30 seconds
 
             else:
-                # If it's outside of trading hours, wait and check again after a short interval
-                print("不在交易时间，等待下一个检查...")
-                time.sleep(60)  # Pause for 60 seconds before checking again
-            sys.stdout.flush()
+                # Update asset based on price change and possibly switch bond
+                current_price = target['最新价']
+                current_symbol = target['symbol']
+                new_price = temp.loc[temp['symbol'] == old_symbol]['最新价'].values[0]
+                asset += share * (new_price - old_price)  # Update asset value
+
+                if current_symbol != old_symbol:
+                    # Sell old and buy new bond
+                    share = asset // current_price  # Recalculate shares for new bond
+                    
+                    output = f"时间为：{current_time}\n清仓 {old_symbol} 买入 {current_symbol} {int(share)} 股 总资产: {asset:.2f}\n\n"
+                    print(output)
+
+                old_price = current_price
+                old_symbol = current_symbol
+
+            i += 1
+            backtest.append(asset)  # Append updated asset
+            print("可转债价格为:",old_price )
+            print("时间为:", current_time, "总资产为：", asset)
+
+            # Pause for 60 seconds before the next transaction
+            time.sleep(30)  # Pause for 30 seconds
+
+        else:
+            # If it's outside of trading hours, wait and check again after a short interval
+            print("不在交易时间，等待下一个检查...")
+            time.sleep(60)  # Pause for 60 seconds before checking again
+        sys.stdout.flush()
 
 online_day_trading()
