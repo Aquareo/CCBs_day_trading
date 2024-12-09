@@ -158,7 +158,7 @@ def online_day_trading():
                 #target = temp.loc[temp['成交额'].idxmax()]  # Choose bond with highest volume
                 # 用于存储所有symbol的最后一行数据
                 all_dfs = []
-            
+                print("开始了")
                 # 遍历每个symbol，获取数据并取最后一行
                 for symbol in symbols:
                     try:
@@ -186,7 +186,7 @@ def online_day_trading():
                 temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
                 temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
                 target = temp.loc[temp['成交额'].idxmax()]
-
+                print(type(target))
                 if i == 0:
                     # First buy
                     old_price = target['最新价']
@@ -219,7 +219,7 @@ def online_day_trading():
                 print("时间为:", current_time, "总资产为：", asset)
 
                 # Pause for 20 seconds before the next transaction
-                time.sleep(20)  # Pause for 30 seconds
+                time.sleep(55)  # Pause for 30 seconds
 
             else:
                 # If it's outside of trading hours, wait and check again after a short interval
