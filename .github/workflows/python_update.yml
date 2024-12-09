@@ -26,7 +26,5 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt  # 安装 requirements.txt 中列出的所有依赖包
 
-      - name: Run trading.py script
-        run: |
-          echo "Running trading.py"
-          python trading.py
+      - name: Run day_trading.py script
+        run: python trading.py  # 只运行 trading.py
