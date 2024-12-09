@@ -85,7 +85,7 @@ print(symbols)
 
 
 #根据symbols的票选出实时的target，返回一个向量，包含symbol，交易量，成交价之类的数据
-def get_all_symbols(symbols):
+def get_temp(symbols):
     # 用于存储所有symbol的最后一行数据
     all_dfs = []
 
@@ -156,7 +156,7 @@ def online_day_trading():
                 #temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
                 #temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
                 #target = temp.loc[temp['成交额'].idxmax()]  # Choose bond with highest volume
-                temp=get_all_symbols(symbols)
+                temp=get_temp(symbols)
                 target = temp.loc[temp['成交额'].idxmax()]
 
                 if i == 0:
