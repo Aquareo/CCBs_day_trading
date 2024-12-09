@@ -7,8 +7,6 @@ from datetime import datetime
 import pytz
 import akshare as ak
 
-
-print("fuck")
 # 初始债券符号列表
 
 # 获取所有债券符号的函数
@@ -86,6 +84,40 @@ print("符合条件的债券符号:")
 print(symbols)
 
 
+#根据symbols的票选出实时的target，返回一个向量，包含symbol，交易量，成交价之类的数据
+def get_temp(symbols):
+    # 用于存储所有symbol的最后一行数据
+    all_dfs = []
+
+    # 遍历每个symbol，获取数据并取最后一行
+    for symbol in symbols:
+        try:
+            # 获取数据
+            df = ak.bond_zh_hs_cov_min(symbol, period='1', adjust='', start_date="1979-09-01 09:32:00", end_date="2222-01-01 09:32:00")
+            
+            # 如果数据非空，取最后一行数据
+            if not df.empty:
+                df = df.iloc[-1]
+                # 添加symbol作为一列来区分不同债券
+                df['symbol'] = symbol
+                # 将每个df添加到all_dfs列表
+                all_dfs.append(df)
+            else:
+                print(f"No data found for symbol: {symbol}")
+        except Exception as e:
+            # 捕捉异常并输出错误信息
+            print(f"Error occurred for symbol {symbol}: {e}")
+
+    # 将所有的df合并成一个DataFrame
+    temp = pd.concat(all_dfs, axis=1).T
+    temp = temp.reset_index(drop=True)
+    
+    # 尝试转换为 float，遇到错误时将其设置为 NaN
+    temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
+    temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
+    return temp
+
+
 def online_day_trading():
     
     # Initial Setup
@@ -120,38 +152,9 @@ def online_day_trading():
                 #temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
                 #temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
                 #target = temp.loc[temp['成交额'].idxmax()]  # Choose bond with highest volume
-                # 用于存储所有symbol的最后一行数据
-                
-                all_dfs = []
-                print("开始了")
-                # 遍历每个symbol，获取数据并取最后一行
-                for symbol in symbols:
-                    try:
-                        # 获取数据
-                        df = ak.bond_zh_hs_cov_min(symbol, period='1', adjust='', start_date="1979-09-01 09:32:00", end_date="2222-01-01 09:32:00")
-                        
-                        # 如果数据非空，取最后一行数据
-                        if not df.empty:
-                            df = df.iloc[-1]
-                            # 添加symbol作为一列来区分不同债券
-                            df['symbol'] = symbol
-                            # 将每个df添加到all_dfs列表
-                            all_dfs.append(df)
-                        else:
-                            print(f"No data found for symbol: {symbol}")
-                    except Exception as e:
-                        # 捕捉异常并输出错误信息
-                        print(f"Error occurred for symbol {symbol}: {e}")
-            
-                # 将所有的df合并成一个DataFrame
-                temp = pd.concat(all_dfs, axis=1).T
-                temp = temp.reset_index(drop=True)
-                
-                # 尝试转换为 float，遇到错误时将其设置为 NaN
-                temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
-                temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
+                temp=get_temp(symbols)
                 target = temp.loc[temp['成交额'].idxmax()]
-                print(type(target))
+
                 if i == 0:
                     # First buy
                     old_price = target['最新价']
@@ -184,7 +187,7 @@ def online_day_trading():
                 print("时间为:", current_time, "总资产为：", asset)
 
                 # Pause for 20 seconds before the next transaction
-                time.sleep(55)  # Pause for 30 seconds
+                time.sleep(20)  # Pause for 30 seconds
 
             else:
                 # If it's outside of trading hours, wait and check again after a short interval
