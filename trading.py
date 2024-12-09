@@ -149,14 +149,14 @@ def online_day_trading():
             (current_time >= datetime.strptime('13:00', '%H:%M').time() and current_time <= datetime.strptime('15:00', '%H:%M').time()):
 
                 #选出target
-                temp = ak.bond_zh_hs_cov_spot()  # Get data for time t
-                temp = temp[temp['symbol'].isin(symbols)]
-                temp.rename(columns={'trade': '最新价', 'amount': '成交额'}, inplace=True)
+                #temp = ak.bond_zh_hs_cov_spot()  # Get data for time t
+                #temp = temp[temp['symbol'].isin(symbols)]
+                #temp.rename(columns={'trade': '最新价', 'amount': '成交额'}, inplace=True)
                 # 尝试转换为 float，遇到错误时将其设置为 NaN
-                temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
-                temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
-                target = temp.loc[temp['成交额'].idxmax()]  # Choose bond with highest volume
-                #temp=get_all_symbols(symbols)
+                #temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
+                #temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
+                #target = temp.loc[temp['成交额'].idxmax()]  # Choose bond with highest volume
+                temp=get_all_symbols(symbols)
                 target = temp.loc[temp['成交额'].idxmax()]
 
                 if i == 0:
