@@ -8,6 +8,8 @@ import pytz
 import akshare as ak
 
 # 初始债券符号列表
+print("程序开始")
+
 
 # 获取所有债券符号的函数
 def get_time():
@@ -86,35 +88,28 @@ print(symbols)
 
 #根据symbols的票选出实时的target，返回一个向量，包含symbol，交易量，成交价之类的数据
 def get_temp(symbols):
-    # 用于存储所有symbol的最后一行数据
-    all_dfs = []
-
-    # 遍历每个symbol，获取数据并取最后一行
+    data_list = []
+    
     for symbol in symbols:
         try:
-            # 获取数据
-            df = ak.bond_zh_hs_cov_min(symbol, period='1', adjust='', start_date="1979-09-01 09:32:00", end_date="2222-01-01 09:32:00")
-            
-            # 如果数据非空，取最后一行数据
+            # 获取数据并取最后一行
+            df = ak.bond_zh_hs_cov_min(symbol, period='1', adjust='', 
+                                       start_date="1979-09-01 09:32:00", 
+                                       end_date="2222-01-01 09:32:00")
             if not df.empty:
-                df = df.iloc[-1]
-                # 添加symbol作为一列来区分不同债券
-                df['symbol'] = symbol
-                # 将每个df添加到all_dfs列表
-                all_dfs.append(df)
-            else:
-                print(f"No data found for symbol: {symbol}")
+                last_row = df.iloc[-1].copy()
+                last_row['symbol'] = symbol
+                data_list.append(last_row)
         except Exception as e:
-            # 捕捉异常并输出错误信息
-            print(f"Error occurred for symbol {symbol}: {e}")
-
-    # 将所有的df合并成一个DataFrame
-    temp = pd.concat(all_dfs, axis=1).T
-    temp = temp.reset_index(drop=True)
+            print(f"Error for {symbol}: {e}")
     
-    # 尝试转换为 float，遇到错误时将其设置为 NaN
-    temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
-    temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
+    # 合并数据
+    temp = pd.DataFrame(data_list).reset_index(drop=True)
+    
+    # 转换为数值类型
+    temp['最新价'] = pd.to_numeric(temp.get('最新价', pd.Series()), errors='coerce')
+    temp['成交额'] = pd.to_numeric(temp.get('成交额', pd.Series()), errors='coerce')
+    
     return temp
 
 
@@ -145,14 +140,14 @@ def online_day_trading():
             (current_time >= datetime.strptime('13:00', '%H:%M').time() and current_time <= datetime.strptime('15:00', '%H:%M').time()):
 
                 #选出target
-                temp = ak.bond_zh_hs_cov_spot()  # Get data for time t
-                temp = temp[temp['symbol'].isin(symbols)]
-                temp.rename(columns={'trade': '最新价', 'amount': '成交额'}, inplace=True)
+                #temp = ak.bond_zh_hs_cov_spot()  # Get data for time t
+                #temp = temp[temp['symbol'].isin(symbols)]
+                #temp.rename(columns={'trade': '最新价', 'amount': '成交额'}, inplace=True)
                 # 尝试转换为 float，遇到错误时将其设置为 NaN
-                temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
-                temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
+                #temp['最新价'] = pd.to_numeric(temp['最新价'], errors='coerce')
+                #temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
 
-                #temp=get_temp(symbols)
+                temp=get_temp(symbols)
                 target = temp.loc[temp['成交额'].idxmax()]
 
                 if i == 0:
