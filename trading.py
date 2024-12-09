@@ -7,6 +7,8 @@ from datetime import datetime
 import pytz
 import akshare as ak
 
+
+print("fuck")
 # 初始债券符号列表
 
 # 获取所有债券符号的函数
