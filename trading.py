@@ -22,6 +22,7 @@ for symbol in symbols:
             print(last_row)
             last_row['symbol'] = symbol
             data_list.append(last_row)
+            sys.stdout.flush()  # 强制刷新输出缓存
     except Exception as e:
         print(f"Error for {symbol}: {e}")
 
