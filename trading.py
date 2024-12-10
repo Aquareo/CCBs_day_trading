@@ -50,7 +50,7 @@ def get_target_symbols(day_n=3,threshod=100000):
 
             #先看是否到期
             if temp.iloc[-1].date<get_date() - timedelta(days=1):
-                print(f"转账{i}已经到期，跳过此转债。")
+                print(f"转债{i}已经到期，跳过此转债。")
                 continue
 
 
