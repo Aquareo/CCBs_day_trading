@@ -141,7 +141,7 @@ def online_day_trading():
     log_file = f"{today} 成交量策略 交易过程.txt"
 
     i = 0
-
+    trading_cost=0
     while True:
         # Get the current time
         current_time = get_time()
@@ -160,10 +160,10 @@ def online_day_trading():
                 old_price = target['最新价']
                 old_symbol = target['symbol']
                 share = asset // old_price  # Calculate how many shares can be bought
-                
+
+                trading_cost+=share*old_price*0.0003
                 output = f"时间为：{current_time}\n买入 {old_symbol} {share} 股 总资产: {asset}\n\n"
                 print(output)
-
 
             else:
                 # Update asset based on price change and possibly switch bond
@@ -175,10 +175,11 @@ def online_day_trading():
                 if current_symbol != old_symbol:
                     # Sell old and buy new bond
                     share = asset // current_price  # Recalculate shares for new bond
+                    trading_cost+=share*current_price *0.0003
                     
                     output = f"时间为：{current_time}\n清仓 {old_symbol} 买入 {current_symbol} {int(share)} 股 总资产: {asset:.2f}\n\n"
                     print(output)
-
+                    
                 old_price = current_price
                 old_symbol = current_symbol
 
@@ -186,7 +187,7 @@ def online_day_trading():
             backtest.append(asset)  # Append updated asset
             print("可转债价格为:",old_price )
             print("时间为:", current_time, "总资产为：", asset)
-
+            print("trading cost",trading_cost)
             # Pause for 60 seconds before the next transaction
             time.sleep(30)  # Pause for 30 seconds
 
