@@ -74,6 +74,8 @@ def get_target_symbols(day_n=3,threshod=100000):
         except Exception as e:
             # 捕获异常并打印错误信息
             print(f"获取债券 {i} 的数据时出错: {e}")
+            
+        sys.stdout.flush()
     return target_symbols
 
 
