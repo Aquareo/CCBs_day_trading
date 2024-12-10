@@ -3,7 +3,7 @@
 '''
 import pandas as pd
 import time
-from datetime import datetime
+from datetime import datetime,timedelta
 import pytz
 import akshare as ak
 import sys
@@ -45,32 +45,20 @@ def get_target_symbols(day_n=3,threshod=100000):
     for i in all_symbols:
         try:
 
+            # 获取每个债券的历史数据
+            temp = ak.bond_zh_hs_cov_daily(symbol=i)
+
             #先看是否到期
-            
-            # 获取每个债券的基本信息（包括到期日期）
-            bond_summary = ak.bond_cb_summary_sina(symbol=i)
-            expiry_date_str = bond_summary[bond_summary['item'] == '到期日期']['value'].values[0]
-
-            # 将到期日期字符串转换为日期对象
-            expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
-
-            today=get_date()
-            # 如果债券已经到期，则跳过此债券
-            if expiry_date <= today:
+            if temp.iloc[-1].date<get_date() - timedelta(days=1):
                 print(f"转账{i}已经到期，跳过此转债。")
                 continue
 
-
-            # 获取每个债券的历史数据
-            temp = ak.bond_zh_hs_cov_daily(symbol=i)
-            temp['changepercent'] = temp['close'].pct_change() * 100
 
             # 检查历史数据是否存在
             if temp is not None and len(temp) >= day_n:
                 # 获取最后三天的成交量数据
                 volumes = temp['volume'].tail(day_n).values  # 取最后day_n行的成交量数据
                 closes = temp['close'].tail(day_n).values
-
 
                 #每日日内的浮动大小
                 changes=(temp['high'].tail(day_n).values-temp['low'].tail(day_n).values)/temp['open'].tail(day_n).values*100
