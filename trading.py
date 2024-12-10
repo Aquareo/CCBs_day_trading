@@ -8,15 +8,22 @@ import pytz
 import akshare as ak
 import sys
 
-# 初始债券符号列表
 
-# 获取所有债券符号的函数
+# 获取年月日（返回 datetime.date 类型）
+def get_date():
+    local_timezone = pytz.timezone('Asia/Shanghai')  # 设置为你所在的时区（比如中国时间）
+    local_time = datetime.now(local_timezone)  # 获取本地时区的当前时间
+    
+    # 提取日期部分，返回 datetime.date 类型
+    return local_time.date()
+
+#获取时分秒
 def get_time():
     # 获取本地时间
     local_timezone = pytz.timezone('Asia/Shanghai')  # 设置为你所在的时区（比如中国时间）
     local_time = datetime.now(local_timezone)  # 获取本地时区的当前时间
-
-    # 获取本地时间的时分秒部分
+    
+    #这是时分秒
     current_time = local_time.strftime('%H:%M:%S')
     current_time_obj = datetime.strptime(current_time, '%H:%M:%S').time()
     return current_time_obj
@@ -34,10 +41,26 @@ def get_target_symbols(day_n=3,threshod=100000):
     all_symbols = get_all_symbols()
 
 
-
     # 遍历所有债券符号
     for i in all_symbols:
         try:
+
+            #先看是否到期
+            
+            # 获取每个债券的基本信息（包括到期日期）
+            bond_summary = ak.bond_cb_summary_sina(symbol=i)
+            expiry_date_str = bond_summary[bond_summary['item'] == '到期日期']['value'].values[0]
+
+            # 将到期日期字符串转换为日期对象
+            expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
+
+            today=get_date()
+            # 如果债券已经到期，则跳过此债券
+            if expiry_date <= today:
+                print(f"转账{i}已经到期，跳过此转债。")
+                continue
+
+
             # 获取每个债券的历史数据
             temp = ak.bond_zh_hs_cov_daily(symbol=i)
             temp['changepercent'] = temp['close'].pct_change() * 100
@@ -48,16 +71,9 @@ def get_target_symbols(day_n=3,threshod=100000):
                 volumes = temp['volume'].tail(day_n).values  # 取最后day_n行的成交量数据
                 closes = temp['close'].tail(day_n).values
 
-                #changes=temp['changepercent'].tail(day_n).values
 
                 #每日日内的浮动大小
                 changes=(temp['high'].tail(day_n).values-temp['low'].tail(day_n).values)/temp['open'].tail(day_n).values*100
-
-                #if i=='sh113569':
-                    #print("注意!!!")
-                    #print(volumes)
-                    #print(closes)
-                    #print(changes)
 
 
                 # 如果最后day_n天的成交量都大于threshod，加入target_symbols
@@ -72,14 +88,6 @@ def get_target_symbols(day_n=3,threshod=100000):
             print(f"获取债券 {i} 的数据时出错: {e}")
     return target_symbols
 
-
-symbols=get_target_symbols()
-
-#symbols=['sh111001', 'sh113030', 'sh113537', 'sh113582', 'sh113685', 'sh118003', 'sh118026', 'sz123035', 'sz123078', 'sz123103', 'sz123184', 'sz123190', 'sz123209', 'sz123227', 'sz123228', 'sz123248', 'sz127035', 'sz127072', 'sz127087', 'sz128044', 'sz128076', 'sz128083', 'sz128109',  'sz128118']
-
-# 打印符合条件的债券符号
-print("符合条件的债券符号:")
-print(symbols)
 
 
 #根据symbols的票选出实时的target，返回一个向量，包含symbol，交易量，成交价之类的数据
@@ -145,16 +153,20 @@ def online_day_trading():
     while True:
         # Get the current time
         current_time = get_time()
-
+        
         # Check if current time is within the allowed trading hours
         # Morning: 09:30 - 11:30, Afternoon: 13:00 - 15:00
         if (current_time >= datetime.strptime('09:30', '%H:%M').time() and current_time <= datetime.strptime('11:30', '%H:%M').time()) or \
         (current_time >= datetime.strptime('13:00', '%H:%M').time() and current_time <= datetime.strptime('15:00', '%H:%M').time()):
 
+            print("时间为:", current_time)
+            print(" ")
+            
             #选出target
             temp=get_temp(symbols)
             target = temp.loc[temp['成交额'].idxmax()]
 
+            #首次交易
             if i == 0:
                 # First buy
                 old_price = target['最新价']
@@ -172,6 +184,7 @@ def online_day_trading():
                 new_price = temp.loc[temp['symbol'] == old_symbol]['最新价'].values[0]
                 asset += share * (new_price - old_price)  # Update asset value
 
+                #如果需要换持有转债
                 if current_symbol != old_symbol:
                     # Sell old and buy new bond
                     share = asset // current_price  # Recalculate shares for new bond
@@ -185,16 +198,30 @@ def online_day_trading():
 
             i += 1
             backtest.append(asset)  # Append updated asset
-            print("可转债价格为:",old_price )
-            print("时间为:", current_time, "总资产为：", asset)
+    
+
+            print("持有可转债价格为:",old_price )
+            print("总资产为：", asset)
             print("trading cost",trading_cost)
-            # Pause for 60 seconds before the next transaction
-            time.sleep(30)  # Pause for 30 seconds
+            # Pause for 25 seconds before the next transaction
+            time.sleep(25)  # Pause for 30 seconds
 
         else:
             # If it's outside of trading hours, wait and check again after a short interval
             print("不在交易时间，等待下一个检查...")
             time.sleep(60)  # Pause for 60 seconds before checking again
+
+        print(" ")
         sys.stdout.flush()
+
+
+print("获取目标可转债池中...")
+symbols=get_target_symbols()
+
+#symbols=['sh111001', 'sh113030', 'sh113537', 'sh113582', 'sh113685', 'sh118003', 'sh118026', 'sz123035', 'sz123078', 'sz123103', 'sz123184', 'sz123190', 'sz123209', 'sz123227', 'sz123228', 'sz123248', 'sz127035', 'sz127072', 'sz127087', 'sz128044', 'sz128076', 'sz128083', 'sz128109',  'sz128118']
+
+# 打印符合条件的债券符号
+print("符合条件的债券符号为:")
+print(symbols)
 
 online_day_trading()
