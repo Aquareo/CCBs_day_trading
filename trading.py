@@ -109,7 +109,7 @@ def get_temp(symbols):
         temp = temp.reset_index(drop=True)
         
         # 尝试转换为 float，遇到错误时将其设置为 NaN
-        temp['最新价'] = pd.to_numeric(temp['收盘'], errors='coerce')
+        temp['最新价'] = pd.to_numeric(temp['最新'], errors='coerce')
         temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
         #target = temp.loc[temp['成交额'].idxmax()]  # Choose bond with highest volume
         return temp
@@ -170,7 +170,17 @@ def online_day_trading():
                 # Update asset based on price change and possibly switch bond
                 current_price = target['最新价']
                 current_symbol = target['symbol']
-                new_price = temp.loc[temp['symbol'] == old_symbol]['最新价'].values[0]
+                #new_price = temp.loc[temp['symbol'] == old_symbol]['最新价'].values[0]
+
+                matched_rows = temp.loc[temp['symbol'] == old_symbol]
+                if not matched_rows.empty:
+                    new_price = matched_rows['最新价'].values[0]
+                else:
+                    # 处理找不到匹配行的情况
+                    print(f"No matching symbol found for {old_symbol}")
+                    continue
+
+                
                 asset += share * (new_price - old_price)  # Update asset value
 
                 #如果需要换持有转债
