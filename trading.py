@@ -1,5 +1,5 @@
 '''
-获取每日的目标债券,成熟的方式
+12月17日版本
 '''
 import pandas as pd
 import time
@@ -7,6 +7,7 @@ from datetime import datetime,timedelta
 import pytz
 import akshare as ak
 import sys
+
 
 # 获取年月日（返回 datetime.date 类型）
 def get_date():
@@ -32,6 +33,7 @@ def get_all_symbols():
     symbols = spot_df['symbol'].values
     return symbols
 
+
 def get_target_symbols(day_n=3,threshod=100000):
     # 目标债券符号列表
     target_symbols = []
@@ -43,7 +45,6 @@ def get_target_symbols(day_n=3,threshod=100000):
     # 遍历所有债券符号
     for i in all_symbols:
         try:
-
             # 获取每个债券的历史数据
             temp = ak.bond_zh_hs_cov_daily(symbol=i)
 
@@ -51,7 +52,6 @@ def get_target_symbols(day_n=3,threshod=100000):
             if temp.iloc[-1].date<get_date() - timedelta(days=1):
                 print(f"转债{i}已经到期，跳过此转债。")
                 continue
-
 
             # 检查历史数据是否存在
             if temp is not None and len(temp) >= day_n:
@@ -64,7 +64,7 @@ def get_target_symbols(day_n=3,threshod=100000):
 
 
                 # 如果最后day_n天的成交量都大于threshod，加入target_symbols
-                if all(volume > threshod for volume in volumes)and all( close <150 for  close in closes)and all( change>2.5 for  change in changes):
+                if all(volume > threshod for volume in volumes)and all(close <150 for  close in closes)and all( change>2.5 for  change in changes):
                     print(f"债券{i}加入目标")
                     target_symbols.append(i)
             else:
@@ -73,54 +73,30 @@ def get_target_symbols(day_n=3,threshod=100000):
         except Exception as e:
             # 捕获异常并打印错误信息
             print(f"获取债券 {i} 的数据时出错: {e}")
-            
+
         sys.stdout.flush()
     return target_symbols
 
 
+def get_filtered_df(symbols):
 
-#根据symbols的票选出实时的target，返回一个向量，包含symbol，交易量，成交价之类的数据
-def get_temp(symbols):
-    # 用于存储所有symbol的最后一行数据
-    all_dfs = []
+    df = ak.bond_zh_hs_cov_spot()
+    columns_to_convert = ['trade', 'pricechange', 'changepercent', 'buy', 'sell', 'settlement', 'open', 'high', 'low', 'volume', 'amount']
 
-    # 遍历每个symbol，获取数据并取最后一行
-    for symbol in symbols:
-        try:
-            # 获取数据
-            df = ak.bond_zh_hs_cov_min(symbol, period='1', adjust='', start_date="1979-09-01 09:32:00", end_date="2222-01-01 09:32:00")
-            
-            # 如果数据非空，取最后一行数据
-            if not df.empty:
-                df = df.iloc[-1]
-                # 添加symbol作为一列来区分不同债券
-                df['symbol'] = symbol
-                # 将每个df添加到all_dfs列表
-                all_dfs.append(df)
-            else:
-                print(f"No data found for symbol: {symbol}")
-        except Exception as e:
-            # 捕捉异常并输出错误信息
-            print(f"Error occurred for symbol {symbol}: {e}")
+    # 将这些列转换为数值类型，遇到无法转换的会被设置为 NaN
+    df[columns_to_convert] = df[columns_to_convert].apply(pd.to_numeric, errors='coerce')
 
-    # 将所有的df合并成一个DataFrame
-    if all_dfs:
-        temp = pd.concat(all_dfs, axis=1).T
-        temp = temp.reset_index(drop=True)
-        
-        # 尝试转换为 float，遇到错误时将其设置为 NaN
-        temp['最新价'] = pd.to_numeric(temp['收盘'], errors='coerce')
-        temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
-        #target = temp.loc[temp['成交额'].idxmax()]  # Choose bond with highest volume
-        return temp
-        # 打印结果
-        #print(temp)
-        #print(target)
-    else:
-        print("No valid data collected.")
-        return pd.DataFrame()
+    filtered_df = df[df['symbol'].isin(symbols)]
+
+    return filtered_df
 
 
+#策略：找出来成交额最大的target,返回一个series,包含trade,pricechange,changepercent,volume,amount 等字段
+def get_series_by_strategy(filtered_df):
+
+    target = filtered_df.loc[filtered_df['amount'].idxmax()]
+
+    return target
 
 def online_day_trading():
     
@@ -151,39 +127,42 @@ def online_day_trading():
             print("时间为:", current_time)
             print(" ")
             
-            #选出target
-            temp=get_temp(symbols)
-            target = temp.loc[temp['成交额'].idxmax()]
+            #选出代码集合symbols的实时行情
+            filtered_df = get_filtered_df(symbols)
+
+            #根据策略找出来成交额最大的target
+            target = get_series_by_strategy(filtered_df)
+
 
             #首次交易
             if i == 0:
                 # First buy
-                old_price = target['最新价']
+                old_price = target['trade']
                 old_symbol = target['symbol']
-                share = asset // old_price  # Calculate how many shares can be bought
 
+
+                """
+                买入操作
+                """
+
+                share = asset // old_price  # Calculate how many shares can be bought
                 trading_cost+=share*old_price*0.0003
                 output = f"时间为：{current_time}\n买入 {old_symbol} {share} 股 总资产: {asset}\n\n"
                 print(output)
 
             else:
                 # Update asset based on price change and possibly switch bond
-                current_price = target['最新价']
+                current_price = target['trade']
                 current_symbol = target['symbol']
-                #new_price = temp.loc[temp['symbol'] == old_symbol]['最新价'].values[0]
-
-                matched_rows = temp.loc[temp['symbol'] == old_symbol]
-                if not matched_rows.empty:
-                    new_price = matched_rows['最新价'].values[0]
-                else:
-                    # 处理找不到匹配行的情况
-                    print(f"No matching symbol found for {old_symbol}")
-                    continue
-
-                
+                new_price = filtered_df.loc[filtered_df['symbol'] == old_symbol]['trade'].values[0]
                 asset += share * (new_price - old_price)  # Update asset value
 
                 #如果需要换持有转债
+
+                """
+                买入操作+卖出操作
+                """
+
                 if current_symbol != old_symbol:
                     # Sell old and buy new bond
                     share = asset // current_price  # Recalculate shares for new bond
@@ -213,10 +192,11 @@ def online_day_trading():
         print(" ")
         sys.stdout.flush()
 
-print("获取目标可转债池中...")
-symbols=get_target_symbols()
 
-#symbols=['sh111001', 'sh113030', 'sh113537', 'sh113582', 'sh113685', 'sh118003', 'sh118026', 'sz123035', 'sz123078', 'sz123103', 'sz123184', 'sz123190', 'sz123209', 'sz123227', 'sz123228', 'sz123248', 'sz127035', 'sz127072', 'sz127087', 'sz128044', 'sz128076', 'sz128083', 'sz128109',  'sz128118']
+print("获取目标可转债池中...")
+#symbols=get_target_symbols()
+
+symbols=['sh111001', 'sh113030', 'sh113537', 'sh113582', 'sh113685', 'sh118003', 'sh118026', 'sz123035', 'sz123078', 'sz123103', 'sz123184', 'sz123190', 'sz123209', 'sz123227', 'sz123228', 'sz123248', 'sz127035', 'sz127072', 'sz127087', 'sz128044', 'sz128076', 'sz128083', 'sz128109',  'sz128118']
 
 # 打印符合条件的债券符号
 print("符合条件的债券符号为:")
