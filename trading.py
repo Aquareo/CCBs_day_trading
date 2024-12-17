@@ -109,7 +109,7 @@ def get_temp(symbols):
         temp = temp.reset_index(drop=True)
         
         # 尝试转换为 float，遇到错误时将其设置为 NaN
-        temp['最新价'] = pd.to_numeric(temp['最新'], errors='coerce')
+        temp['最新价'] = pd.to_numeric(temp['收盘'], errors='coerce')
         temp['成交额'] = pd.to_numeric(temp['成交额'], errors='coerce')
         #target = temp.loc[temp['成交额'].idxmax()]  # Choose bond with highest volume
         return temp
