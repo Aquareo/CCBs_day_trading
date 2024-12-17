@@ -1,5 +1,5 @@
 '''
-12月17日版本
+获取每日的目标债券,成熟的方式
 '''
 import pandas as pd
 import time
@@ -34,7 +34,7 @@ def get_all_symbols():
     return symbols
 
 
-def get_target_symbols(day_n=3,threshod=100000):
+def get_target_symbols(day_n=3,threshod=180000):
     # 目标债券符号列表
     target_symbols = []
 
@@ -182,7 +182,7 @@ def online_day_trading():
             print("总资产为：", asset)
             print("trading cost",trading_cost)
             # Pause for 25 seconds before the next transaction
-            time.sleep(25)  # Pause for 30 seconds
+            time.sleep(55)  # Pause for 30 seconds
 
         else:
             # If it's outside of trading hours, wait and check again after a short interval
@@ -194,11 +194,11 @@ def online_day_trading():
 
 
 print("获取目标可转债池中...")
-#symbols=get_target_symbols()
+symbols=get_target_symbols()
 
-symbols=['sh111001', 'sh113030', 'sh113537', 'sh113582', 'sh113685', 'sh118003', 'sh118026', 'sz123035', 'sz123078', 'sz123103', 'sz123184', 'sz123190', 'sz123209', 'sz123227', 'sz123228', 'sz123248', 'sz127035', 'sz127072', 'sz127087', 'sz128044', 'sz128076', 'sz128083', 'sz128109',  'sz128118']
-
+#symbols=['sh110097', 'sh111012', 'sh111019', 'sh113530', 'sh113688', 'sh118003', 'sh118026', 'sz123018', 'sz123103', 'sz123138', 'sz123142', 'sz123163', 'sz123177', 'sz123237', 'sz128044', 'sz128066', 'sz128083', 'sz128085', 'sz128100']
 # 打印符合条件的债券符号
+
 print("符合条件的债券符号为:")
 print(symbols)
 
