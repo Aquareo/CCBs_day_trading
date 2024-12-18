@@ -33,7 +33,7 @@ def get_all_symbols():
     return symbols
 
 
-def get_target_symbols(day_n=3,threshod=180000):
+def get_target_symbols(day_n=3,threshod=100000):
     # 目标债券符号列表
     target_symbols = []
 
@@ -63,7 +63,7 @@ def get_target_symbols(day_n=3,threshod=180000):
 
 
                 # 如果最后day_n天的成交量都大于threshod，加入target_symbols
-                if all(volume > threshod for volume in volumes)and all(close <150 for  close in closes)and all( change>3 for  change in changes):
+                if all(volume > threshod for volume in volumes)and all(close <150 for  close in closes)and all( change>2.5 for  change in changes):
                     print(f"债券{i}加入目标")
                     target_symbols.append(i)
             else:
