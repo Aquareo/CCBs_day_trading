@@ -191,7 +191,6 @@ def online_day_trading():
         print(" ")
         sys.stdout.flush()
 
-
 print("获取目标可转债池中...")
 symbols=get_target_symbols()
 
