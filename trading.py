@@ -89,6 +89,11 @@ def get_symbols(symbols):
             # 尝试获取数据
             temp = ak.bond_zh_hs_cov_min(symbol, period='1')
             temp['symbol']=symbol
+
+            # 只取最后一行，这很关键
+            temp = temp.iloc[[-1]]  # 取最后一行，并保持DataFrame格式
+
+
             df = pd.concat([df, temp], ignore_index=True)
 
         except Exception as e:
@@ -100,7 +105,7 @@ def get_symbols(symbols):
 
 def get_target(filtered_df):
     target = filtered_df.loc[filtered_df['成交额'].idxmax()]
-    return target
+    return target['symbol']
 
 
 def get_filtered_df(symbols):
@@ -129,8 +134,10 @@ def online_day_trading():
     asset = initial  # Portfolio value
     backtest = []  # Store backtest results
 
-    today = datetime.today().strftime('%Y-%m-%d')  # Set today's date
     print("今天:", today)
+    today = datetime.today().strftime('%Y-%m-%d')  # Set today's date
+
+    
     sys.stdout.flush()
            
     # Set up logging file path
@@ -153,12 +160,23 @@ def online_day_trading():
             #选出代码集合symbols的实时行情
             filtered_df = get_symbols(symbols)
 
-            #根据策略找出来成交额最大的target
-            target = get_target(filtered_df)
-            
+            #根据策略找出来成交额最大的target_symbol,这样就可以编写一个策略了
+            target_symbol = get_target(filtered_df)
+
+
+            #获取实时行情
+            spot = ak.bond_zh_hs_cov_spot()
+            columns_to_convert = ['trade', 'pricechange', 'changepercent', 'buy', 'sell', 'settlement', 'open', 'high', 'low', 'volume', 'amount']
+
+            # 将这些列转换为数值类型，遇到无法转换的会被设置为 NaN
+            spot[columns_to_convert] = spot[columns_to_convert].apply(pd.to_numeric, errors='coerce')
+
+
+            target=spot.loc[spot['symbol']==  target_symbol].squeeze()
+
 
             #最新价的字段名字
-            price_symbol='收盘'
+            price_symbol='trade'
 
             #首次交易
             if i == 0:
@@ -180,7 +198,7 @@ def online_day_trading():
                 # Update asset based on price change and possibly switch bond
                 current_price = target[price_symbol]
                 current_symbol = target['symbol']
-                new_price = filtered_df.loc[filtered_df['symbol'] == old_symbol][price_symbol].values[0]
+                new_price = spot.loc[spot['symbol'] == old_symbol][price_symbol].values[0]
                 asset += share * (new_price - old_price)  # Update asset value
 
                 #如果需要换持有转债
@@ -200,15 +218,18 @@ def online_day_trading():
                 old_price = current_price
                 old_symbol = current_symbol
 
+
+                print("目前持有可转债代码: ",old_symbol,",价格为:",old_price )
+                print("总资产为：", asset)
+                print("trading cost",trading_cost)
+
+
+            #一次迭代完成
             i += 1
             backtest.append(asset)  # Append updated asset
-    
 
-            print("持有可转债价格为:",old_price )
-            print("总资产为：", asset)
-            print("trading cost",trading_cost)
             # Pause for 25 seconds before the next transaction
-            time.sleep(55)  # Pause for 30 seconds
+            time.sleep(60)  # Pause for 30 seconds
 
         else:
             # If it's outside of trading hours, wait and check again after a short interval
@@ -220,9 +241,9 @@ def online_day_trading():
 
 
 print("获取目标可转债池中...")
-symbols=get_target_symbols()
+#symbols=get_target_symbols()
 
-#symbols=['sh110097', 'sh111012', 'sh111019', 'sh113530', 'sh113688', 'sh118003', 'sh118026', 'sz123018', 'sz123103', 'sz123138', 'sz123142', 'sz123163', 'sz123177', 'sz123237', 'sz128044', 'sz128066', 'sz128083', 'sz128085', 'sz128100']
+symbols=['sh110052', 'sh111012', 'sh111016', 'sh113549', 'sh113569', 'sh113582', 'sh113597', 'sh113678', 'sh113688', 'sh118007', 'sh118026', 'sh118043', 'sz123067', 'sz123089', 'sz123099', 'sz123103', 'sz123131', 'sz123138', 'sz123147', 'sz123160', 'sz123163', 'sz123166', 'sz123184', 'sz123226', 'sz123228', 'sz123231', 'sz123237', 'sz123239', 'sz123245', 'sz123248', 'sz123249', 'sz127033', 'sz127051', 'sz128072', 'sz128083', 'sz128109']
 # 打印符合条件的债券符号
 
 print("符合条件的债券符号为:")
