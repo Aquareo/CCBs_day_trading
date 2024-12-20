@@ -84,7 +84,7 @@ def get_symbols(symbols):
     df = pd.DataFrame()
 
     for symbol in symbols:
-        print(f"获取 {symbol}")
+        #print(f"获取 {symbol}")
         try:
             # 尝试获取数据
             temp = ak.bond_zh_hs_cov_min(symbol, period='1')
@@ -94,7 +94,7 @@ def get_symbols(symbols):
         except Exception as e:
             # 捕获所有异常，打印错误信息
             void_symbol.append(symbol)
-            print(f"获取 {symbol} 数据时发生错误: {e}")
+            #print(f"获取 {symbol} 数据时发生错误: {e}")
             continue  # 发生错误时跳过此symbol，继续处理下一个symbol
     return df
 
