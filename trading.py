@@ -8,6 +8,7 @@ import pytz
 import akshare as ak
 import sys
 
+
 # 获取年月日（返回 datetime.date 类型）
 def get_date():
     local_timezone = pytz.timezone('Asia/Shanghai')  # 设置为你所在的时区（比如中国时间）
@@ -33,7 +34,7 @@ def get_all_symbols():
     return symbols
 
 
-def get_target_symbols(day_n=3,threshod=100000):
+def get_target_symbols(day_n=3,threshod=180000):
     # 目标债券符号列表
     target_symbols = []
 
@@ -77,6 +78,31 @@ def get_target_symbols(day_n=3,threshod=100000):
     return target_symbols
 
 
+
+def get_symbols(symbols):
+    void_symbol=[]
+    df = pd.DataFrame()
+
+    for symbol in symbols:
+        print(f"获取 {symbol}")
+        try:
+            # 尝试获取数据
+            temp = ak.bond_zh_hs_cov_min(symbol, period='1')
+            temp['symbol']=symbol
+            df = pd.concat([df, temp], ignore_index=True)
+
+        except Exception as e:
+            # 捕获所有异常，打印错误信息
+            void_symbol.append(symbol)
+            print(f"获取 {symbol} 数据时发生错误: {e}")
+            continue  # 发生错误时跳过此symbol，继续处理下一个symbol
+    return df
+
+def get_target(filtered_df):
+    target = filtered_df.loc[filtered_df['成交额'].idxmax()]
+    return target
+
+
 def get_filtered_df(symbols):
 
     df = ak.bond_zh_hs_cov_spot()
@@ -92,9 +118,7 @@ def get_filtered_df(symbols):
 
 #策略：找出来成交额最大的target,返回一个series,包含trade,pricechange,changepercent,volume,amount 等字段
 def get_series_by_strategy(filtered_df):
-
     target = filtered_df.loc[filtered_df['amount'].idxmax()]
-
     return target
 
 def online_day_trading():
@@ -127,16 +151,19 @@ def online_day_trading():
             print(" ")
             
             #选出代码集合symbols的实时行情
-            filtered_df = get_filtered_df(symbols)
+            filtered_df = get_symbols(symbols)
 
             #根据策略找出来成交额最大的target
-            target = get_series_by_strategy(filtered_df)
+            target = get_target(filtered_df)
+            
 
+            #最新价的字段名字
+            price_symbol='收盘'
 
             #首次交易
             if i == 0:
                 # First buy
-                old_price = target['trade']
+                old_price = target[price_symbol]
                 old_symbol = target['symbol']
 
 
@@ -151,9 +178,9 @@ def online_day_trading():
 
             else:
                 # Update asset based on price change and possibly switch bond
-                current_price = target['trade']
+                current_price = target[price_symbol]
                 current_symbol = target['symbol']
-                new_price = filtered_df.loc[filtered_df['symbol'] == old_symbol]['trade'].values[0]
+                new_price = filtered_df.loc[filtered_df['symbol'] == old_symbol][price_symbol].values[0]
                 asset += share * (new_price - old_price)  # Update asset value
 
                 #如果需要换持有转债
@@ -190,6 +217,7 @@ def online_day_trading():
 
         print(" ")
         sys.stdout.flush()
+
 
 print("获取目标可转债池中...")
 symbols=get_target_symbols()
