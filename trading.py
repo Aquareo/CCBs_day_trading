@@ -8,6 +8,7 @@ import pytz
 import akshare as ak
 import sys
 
+
 # 获取年月日（返回 datetime.date 类型）
 def get_date():
     local_timezone = pytz.timezone('Asia/Shanghai')  # 设置为你所在的时区（比如中国时间）
@@ -133,9 +134,9 @@ def online_day_trading():
     asset = initial  # Portfolio value
     backtest = []  # Store backtest results
 
-    print("今天:", today)
-    today = datetime.today().strftime('%Y-%m-%d')  # Set today's date
 
+    today = datetime.today().strftime('%Y-%m-%d')  # Set today's date
+    print("今天:", today)
     
     sys.stdout.flush()
            
@@ -240,9 +241,9 @@ def online_day_trading():
 
 
 print("获取目标可转债池中...")
-#symbols=get_target_symbols()
+symbols=get_target_symbols()
 
-symbols=['sh110052', 'sh111012', 'sh111016', 'sh113549', 'sh113569', 'sh113582', 'sh113597', 'sh113678', 'sh113688', 'sh118007', 'sh118026', 'sh118043', 'sz123067', 'sz123089', 'sz123099', 'sz123103', 'sz123131', 'sz123138', 'sz123147', 'sz123160', 'sz123163', 'sz123166', 'sz123184', 'sz123226', 'sz123228', 'sz123231', 'sz123237', 'sz123239', 'sz123245', 'sz123248', 'sz123249', 'sz127033', 'sz127051', 'sz128072', 'sz128083', 'sz128109']
+#symbols=['sh110052', 'sh111012', 'sh111016', 'sh113549', 'sh113569', 'sh113582', 'sh113597', 'sh113678', 'sh113688', 'sh118007', 'sh118026', 'sh118043', 'sz123067', 'sz123089', 'sz123099', 'sz123103', 'sz123131', 'sz123138', 'sz123147', 'sz123160', 'sz123163', 'sz123166', 'sz123184', 'sz123226', 'sz123228', 'sz123231', 'sz123237', 'sz123239', 'sz123245', 'sz123248', 'sz123249', 'sz127033', 'sz127051', 'sz128072', 'sz128083', 'sz128109']
 # 打印符合条件的债券符号
 
 print("符合条件的债券符号为:")
