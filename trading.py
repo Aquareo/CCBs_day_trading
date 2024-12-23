@@ -229,7 +229,7 @@ def online_day_trading():
             backtest.append(asset)  # Append updated asset
 
             # Pause for 25 seconds before the next transaction
-            time.sleep(60)  # Pause for 30 seconds
+            time.sleep(20)  # Pause for 30 seconds
 
         else:
             # If it's outside of trading hours, wait and check again after a short interval
